@@ -145,7 +145,23 @@ jobs:
           cd repo/$DEPLOYMENT_TYPE/$INTERNAL_NAME
           echo "Created manifest directory for $INTERNAL_NAME."
 
+      - name: Check Deployment Type and Version Change
+        id: check_deployment_and_version
+        run: |
+          if [[ "${DEPLOYMENT_TYPE}" == "stable" && "${{ steps.check_version.outputs.version_needs_update }}" == "false" ]]; then
+            echo "copy_toml=true" >> $GITHUB_OUTPUT
+          else
+            echo "copy_toml=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Copy Plugin TOML Manifest from testing to stable
+        if: steps.check_deployment_and_version.outputs.copy_toml == 'true'
+        run: |
+          cp -f "repo/testing/live/${INTERNAL_NAME}/manifest.toml" "repo/stable/${INTERNAL_NAME}/manifest.toml"
+          echo "Copied TOML manifest from testing to stable."
+          
       - name: Create Plugin TOML Manifest
+        if: steps.check_deployment_and_version.outputs.copy_toml == 'false'
         run: |
           cd repo/$DEPLOYMENT_TYPE/$INTERNAL_NAME
           echo "[plugin]" > manifest.toml
