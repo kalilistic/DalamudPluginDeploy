@@ -168,8 +168,17 @@ jobs:
       - name: Copy Plugin TOML Manifest from testing to stable
         if: steps.check_deployment_and_version.outputs.copy_toml == 'true'
         run: |
-          cp -f "repo/testing/live/${INTERNAL_NAME}/manifest.toml" "repo/stable/${INTERNAL_NAME}/manifest.toml"
-          echo "Copied TOML manifest from testing to stable."
+          # Temporarily create the necessary directory structure
+          mkdir -p "repo/testing/live/${INTERNAL_NAME}"
+          
+          # Attempt to copy the TOML file if it exists
+          if [ -f "repo/testing/live/${INTERNAL_NAME}/manifest.toml" ]; then
+              cp "repo/testing/live/${INTERNAL_NAME}/manifest.toml" "repo/stable/${INTERNAL_NAME}/manifest.toml"
+              echo "Copied TOML manifest from testing to stable."
+          else
+              echo "TOML manifest does not exist in testing, skipping copy."
+              rm -r "repo/testing/live/${INTERNAL_NAME}"
+          fi
           
       - name: Create Plugin TOML Manifest
         if: steps.check_deployment_and_version.outputs.create_toml == 'true'
